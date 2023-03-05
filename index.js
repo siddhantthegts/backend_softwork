@@ -89,7 +89,7 @@ const user = new Schema({
 });
 
 const trade = new Schema({
-  trade: Array,
+  trade: String,
   date: {
     type: Date,
     default: Date.now,
@@ -110,6 +110,12 @@ const classification = new Schema({
 
 const wage = new Schema({
   trade: String,
+  fromDate: Date,
+  toDate: Date,
+  regularTime: String,
+  shiftTime: String,
+  overTime: String,
+  doubleTime: String,
   classificationType: String,
   date: {
     type: Date,
@@ -140,6 +146,8 @@ app.all('/wages', (req, res) => {
       regularTime: req.body.regularTime,
       doubleTime: req.body.doubleTime,
       overTime: req.body.overTime,
+      toDate: req.body.toDate,
+      fromDate: req.body.fromDate,
       date: new Date(),
     });
     addWage.save().then(() => {
@@ -151,6 +159,18 @@ app.all('/wages', (req, res) => {
       );
       res.send('Saved Successfully!!!');
     });
+  } else if (req.method === 'GET') {
+    const wageData = [];
+    const WageModel = mongoose.model('Wages', wage);
+    const func = async () => {
+      await WageModel.find({}).then((r) => {
+        for (let i = 0; i < r.length; i++) {
+          wageData.push(r[i]);
+        }
+      });
+      res.send(wageData);
+    };
+    func();
   }
 });
 
@@ -210,7 +230,9 @@ app.all('/classification', (req, res) => {
     const data = [];
     const func = async () => {
       await ClassificationModel.find({}).then((r) => {
-        r.map((i) => data.push(i.classificationType));
+        for (let i = 0; i < r.length; i++) {
+          data.push(r[i]);
+        }
       });
       res.send(data);
     };
@@ -278,10 +300,61 @@ app.all('/trade', (req, res) => {
           });
         }
       });
-      res.send(tradeData);
+      res.json(tradeData);
     };
     func();
   }
+});
+
+app.get('/classificationonly', (req, res) => {
+  const data = [];
+  mongoose.connect(client);
+  const classi = mongoose.model('Classification', classification);
+  classi
+    .find({}, { _id: 1, classificationType: 1, unionAffiliation: 1 })
+    .then((r) => {
+      res.send(r);
+    });
+});
+
+app.get('/employeesonly', (req, res) => {
+  mongoose.connect(client);
+  const employeeonly = mongoose.model('Users', user);
+  employeeonly
+    .find({}, { _id: 1, firstName: 1, lastName: 1, employeeType: 1 })
+    .then((r) => {
+      res.send(r);
+    });
+});
+
+app.get('/contractorsonly', (req, res) => {
+  mongoose.connect(client);
+  const contractor = mongoose.model('Contractors', contractors);
+  contractor
+    .find(
+      {},
+      { _id: 1, contractorName: 1, contractorTrade: 1, contractorType: 1 }
+    )
+    .then((r) => {
+      res.send(r);
+    });
+});
+
+app.get('/projectsonly', (req, res) => {
+  mongoose.connect(client);
+  const projectsonly = mongoose.model('Projects', projects);
+  projectsonly.find({}, { _id: 1, name: 1, code: 1 }).then((r) => {
+    res.send(r);
+  });
+});
+
+app.get('/tradeonly', (req, res) => {
+  mongoose.connect(client);
+  const TradeModel = mongoose.model('Trade', trade);
+
+  TradeModel.find({}, { _id: 0, trade: 1 }).then((r) => {
+    res.send(r);
+  });
 });
 
 app.all('/employees', (req, res, next) => {
@@ -311,27 +384,123 @@ app.all('/employees', (req, res, next) => {
       );
       console.log(req.body);
     });
-    // }
-    // else {
-    //   const addUser = new UserModel({
-    //     firstName: req.body.firstName,
-    //     lastName: req.body.lastName,
-    //     email: req.body.email,
-    //     employeeType: req.body.selectedOption,
-    //     phoneNumber: req.body.phoneNumber,
-    //     compnayName: req.body.compnayName ? req.body.compnayName : '',
-    //     employeeDetail: req.body.employeeDetail,
-    //   });
-    //   addUser.save().then(() => {
-    //     console.log(
-    //       req.body.firstName + ' ' + req.body.lastName + ' saved Successfully!!'
-    //     );
-    //     console.log(req.body);
-    //   });
-    // }
-  } else {
-    next();
+  } else if (req.method === 'GET') {
+    const employeeData = [];
+    const UserModel = mongoose.model('User', user);
+    const func = async () => {
+      await UserModel.find({}).then((r) => {
+        for (let i = 0; i < r.length; i++) {
+          employeeData.push(r[i]);
+        }
+      });
+      res.json(employeeData);
+    };
+    func();
   }
+});
+
+app.get('/delete/projects', (req, res) => {
+  mongoose.connect(client);
+  const projectModel = mongoose.model('Project', projects);
+  projectModel.deleteOne({ _id: req.query.id }).then(() => {
+    res.send('Deleted ' + req.query.id);
+  });
+});
+app.get('/delete/contractors', (req, res) => {
+  mongoose.connect(client);
+  const contractorModel = mongoose.model('Contractors', contractors);
+  contractorModel.deleteOne({ _id: req.query.id }).then(() => {
+    res.send('Deleted ' + req.query.id);
+  });
+});
+app.get('/delete/classification', (req, res) => {
+  mongoose.connect(client);
+  const classificationModel = mongoose.model('Classification', classification);
+  classificationModel.deleteOne({ _id: req.query.id }).then(() => {
+    res.send('Deleted ' + req.query.id);
+  });
+});
+app.get('/delete/employees', (req, res) => {
+  mongoose.connect(client);
+  const employeeModel = mongoose.model('User', user);
+  employeeModel.deleteOne({ _id: req.query.id }).then(() => {
+    res.send('Deleted ' + req.query.id);
+  });
+});
+app.get('/delete/wages', (req, res) => {
+  mongoose.connect(client);
+  const wageModel = mongoose.model('Wage', wage);
+  wageModel.deleteOne({ _id: req.query.id }).then(() => {
+    res.send('Deleted ' + req.query.id);
+  });
+});
+
+app.post('/update/projects', (req, res) => {
+  mongoose.connect(client);
+  const projectModel = mongoose.model('Project', projects);
+  projectModel
+    .updateOne({ _id: req.query.id }, [
+      {
+        $set: {
+          code: req.body.code,
+          name: req.body.name,
+          address: req.body.address,
+          description: req.body.description,
+          ntpDate: req.body.ntpDate,
+          scDate: req.body.scDate,
+          fcDate: req.body.fcDate,
+          awardDate: req.body.awardDate,
+          primeContractors: req.body.primeContractors,
+          subContractors: req.body.subContractors,
+          assignedProjectManager: req.body.assignedProjectManager,
+          assignedProjectSupervisor: req.body.assignedProjectSupervisor,
+        },
+      },
+    ])
+    .then(() => {
+      res.send('Updated ' + req.query.id);
+    });
+});
+app.post('/update/contractors', (req, res) => {
+  mongoose.connect(client);
+  const contractorModel = mongoose.model('Contractors', contractors);
+  contractorModel
+    .updateOne({ _id: req.query.id }, [
+      {
+        $set: {
+          contractorName: req.body.contractorname,
+          contractorAddress: req.body.contractoraddress,
+          contractorType: req.body.contractortype,
+          contractorTrade: req.body.contractortrade,
+          assignedProject: req.body.assignedproject,
+          cpi: req.body.cpi,
+        },
+      },
+    ])
+    .then(() => {
+      res.send('Updated ' + req.query.id);
+    });
+});
+app.get('/update/classification', (req, res) => {
+  mongoose.connect(client);
+  const classificationModel = mongoose.model('Classification', classification);
+  classificationModel.deleteOne({ _id: req.query.id }).then(() => {
+    res.send('Deleted ' + req.query.id);
+  });
+});
+app.get('/update/employees', (req, res) => {
+  mongoose.connect(client);
+  const employeeModel = mongoose.model('User', user);
+  employeeModel.deleteOne({ _id: req.query.id }).then(() => {
+    res.send('Deleted ' + req.query.id);
+  });
+});
+app.get('/update/wages', (req, res) => {
+  mongoose.connect(client);
+  const wageModel = mongoose.model('Wage', wage);
+  wageModel.deleteOne({ _id: req.query.id }).then(() => {
+    res.send('Deleted ' + req.query.id);
+  });
 });
 
 app.listen(cfg.port, () => {
