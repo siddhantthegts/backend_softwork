@@ -151,7 +151,7 @@ app.all('/wages', (req, res) => {
       date: new Date(),
     });
     addWage.save().then(() => {
-      console.log(
+      res.send(
         req.body.trade +
           ' ' +
           req.body.classificationType +
@@ -191,7 +191,8 @@ app.all('/contractors', (req, res) => {
         email: req.body.cpi.email,
       },
     });
-    addContractor.save().then(() => {
+    addContractor.save().then((r) => {
+      res.send('Contractor added to database');
       console.log(req.body + ' saved succesfully');
     });
   } else if (req.method === 'GET') {
@@ -218,12 +219,7 @@ app.all('/classification', (req, res) => {
       classificationType: req.body.classificationType,
     });
     addClassification.save().then(() => {
-      console.log(
-        req.body.classificationType +
-          ' ' +
-          req.body.unionAffiliation +
-          ' saved Successfully!!'
-      );
+      res.send(req.body.classificationType + ' saved Successfully!!');
     });
   }
   if (req.method === 'GET') {
@@ -259,6 +255,7 @@ app.all('/projects', (req, res) => {
       assignedProjectSupervisor: req.body.assignedProjectSupervisor,
     });
     addProject.save().then(() => {
+      res.send('Data added to database');
       console.log(req.body + ' added successfully!!');
     });
   } else if (req.method === 'GET') {
@@ -267,7 +264,6 @@ app.all('/projects', (req, res) => {
     const func = async () => {
       await ProjectModal.find({}).then((r) => {
         for (let i = 0; i < r.length; i++) {
-          const arr = r[i];
           projectData.push(r[i]);
         }
       });
@@ -285,7 +281,7 @@ app.all('/trade', (req, res) => {
       trade: req.body.trade,
     });
     addTrade.save().then(() => {
-      console.log(req.body.trade + ' saved Successfully!!');
+      res.send(req.body.trade + ' saved Successfully!!');
     });
   }
   if (req.method === 'GET') {
@@ -405,6 +401,7 @@ app.get('/delete/projects', (req, res) => {
   projectModel.deleteOne({ _id: req.query.id }).then(() => {
     res.send('Deleted ' + req.query.id);
   });
+  console.log(req.query.id + 'deleted from server');
 });
 app.get('/delete/contractors', (req, res) => {
   mongoose.connect(client);
@@ -412,6 +409,7 @@ app.get('/delete/contractors', (req, res) => {
   contractorModel.deleteOne({ _id: req.query.id }).then(() => {
     res.send('Deleted ' + req.query.id);
   });
+  console.log(req.query.id + 'deleted from server');
 });
 app.get('/delete/classification', (req, res) => {
   mongoose.connect(client);
@@ -419,6 +417,7 @@ app.get('/delete/classification', (req, res) => {
   classificationModel.deleteOne({ _id: req.query.id }).then(() => {
     res.send('Deleted ' + req.query.id);
   });
+  console.log(req.query.id + 'deleted from server');
 });
 app.get('/delete/employees', (req, res) => {
   mongoose.connect(client);
@@ -426,6 +425,7 @@ app.get('/delete/employees', (req, res) => {
   employeeModel.deleteOne({ _id: req.query.id }).then(() => {
     res.send('Deleted ' + req.query.id);
   });
+  console.log(req.query.id + 'deleted from server');
 });
 app.get('/delete/wages', (req, res) => {
   mongoose.connect(client);
@@ -433,6 +433,7 @@ app.get('/delete/wages', (req, res) => {
   wageModel.deleteOne({ _id: req.query.id }).then(() => {
     res.send('Deleted ' + req.query.id);
   });
+  console.log(req.query.id + 'deleted from server');
 });
 
 app.post('/update/projects', (req, res) => {
@@ -488,12 +489,27 @@ app.get('/update/classification', (req, res) => {
     res.send('Deleted ' + req.query.id);
   });
 });
-app.get('/update/employees', (req, res) => {
+app.post('/update/employees', (req, res) => {
   mongoose.connect(client);
   const employeeModel = mongoose.model('User', user);
-  employeeModel.deleteOne({ _id: req.query.id }).then(() => {
-    res.send('Deleted ' + req.query.id);
-  });
+  employeeModel.updateOne({ _id: req.query.id }, [
+    {
+      $set: {
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        employeeType: req.body.employeeType,
+        address: req.body.address,
+        dob: req.body.dob,
+        gender: req.body.gender,
+        emergencyContact: req.body.emergencyContact,
+        employeeCertification: req.body.employeeCertification,
+        phoneNumber: req.body.phoneNumber,
+        compnayName: req.body.compnayName ? req.body.compnayName : '',
+        companyAddress: req.body.array,
+      },
+    },
+  ]);
 });
 app.get('/update/wages', (req, res) => {
   mongoose.connect(client);
